@@ -22,34 +22,32 @@ class NewVisitorTest(unittest.TestCase):
         except WebDriverException:
             pass
 
-        # She notices the page title and header mention to-do lists
         self.assertIn('To-Do', self.browser.title)
-
         header_text = self.browser.find_element_by_tag_name('h1').text
         self.assertIn('To-Do', header_text)
 
-        # She is invited to enter a to-do item straight away
-        input_box = self.browser.find_element_by_id('id_new_item')
-        self.assertEqual(
-            input_box.get_attribute('placeholder'),
-            'Enter a to-do item'
-        )
+        item_list = ["rabbit", "cute puppy"]
+        for i, item in enumerate(item_list, start=1):
+            input_box = self.browser.find_element_by_id('id_new_item')
+            self.assertEqual(
+                input_box.get_attribute('placeholder'),
+                'Enter a to-do item'
+            )
 
-        # She types "Buy peacock feathers" into a text box (Edith's hobby
-        # is tying fly-fishing lures)
-        input_box.send_keys('Buy peacock feathers')
+            input_box.send_keys(item)
 
-        # When she hits enter, the page updates, and now the page lists
-        # "1: Buy peacock feathers" as an item in a to-do list table
-        input_box.send_keys(Keys.ENTER)
-        time.sleep(1)
+            input_box.send_keys(Keys.ENTER)
+            time.sleep(1)
+
         table = self.browser.find_element_by_id('id_list_table')
         rows = table.find_elements_by_tag_name('tr')
 
-        self.assertTrue(
-            any(row.text == '1: Buy peacock feathers' for row in rows),
-            "새 아이템이 추가되지 않았어요!\n %s" % table.text
-        )
+        for i, item in enumerate(item_list, start=1):
+            row = rows[i-1]
+            self.assertTrue(
+                row.text == str(i)+': '+item,
+                "새 아이템이 추가되지 않았어요!\n %s" % row.text
+            )
 
 
 if __name__ == '__main__':
