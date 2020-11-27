@@ -1,12 +1,13 @@
 import time
 
 from selenium import webdriver
-import unittest
 from selenium.common.exceptions import WebDriverException
 from selenium.webdriver.common.keys import Keys
 
+from django.test import LiveServerTestCase
 
-class NewVisitorTest(unittest.TestCase):
+
+class NewVisitorTest(LiveServerTestCase):
 
     def setUp(self):
         self.browser = webdriver.Chrome()
@@ -18,7 +19,7 @@ class NewVisitorTest(unittest.TestCase):
         # Edith has heard about a cool new online to-do app. She goes
         # to check out its homepage
         try:
-            self.browser.get('http://localhost:8000')
+            self.browser.get(self.live_server_url)
         except WebDriverException:
             pass
 
@@ -51,7 +52,3 @@ class NewVisitorTest(unittest.TestCase):
                 real == expected,
                 error_format % (expected, real)
             )
-
-
-if __name__ == '__main__':
-    unittest.main()
