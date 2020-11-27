@@ -8,9 +8,12 @@ def home_page(request):
 
 
 def view_list(request, list_id):
-    list_ = List.objects.get(id=list_id)
-    items = Item.objects.filter(list=list_)
-    return render(request, 'lists/list.html', {'item_list': items})
+    a_list = List.objects.get(id=list_id)
+    items = Item.objects.filter(list=a_list)
+    return render(request, 'lists/list.html',
+                  {
+                      'list': a_list
+                  })
 
 
 def new_list(request):

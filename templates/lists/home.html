@@ -1,12 +1,16 @@
-<html>
+<!DOCTYPE HTML>
+{% load static %}
+<html lang="ko">
     <head>
         <title>To-Do lists</title>
     </head>
     <body>
         <h1>Your To-Do list</h1>
+        {% block content %}
         <form method="POST" action="/lists/new">
             <input name="item_text" id="id_new_item" placeholder="Enter a to-do item" />
             {% csrf_token %}
         </form>
+        {% endblock %}
     </body>
 </html>
