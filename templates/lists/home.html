@@ -2,15 +2,28 @@
 {% load static %}
 <html lang="ko">
     <head>
+        <link rel="stylesheet" href="https://www.w3schools.com/w3css/4/w3.css">
         <title>To-Do lists</title>
     </head>
     <body>
-        <h1>Your To-Do list</h1>
-        {% block content %}
-        <form method="POST" action="/lists/new">
-            <input name="item_text" id="id_new_item" placeholder="Enter a to-do item" />
-            {% csrf_token %}
-        </form>
-        {% endblock %}
+        <div class="w3-container w3-display-topmiddle m6 l8">
+            <div class="w3-row">
+                <div class="w3-col">
+                  <div class="w3-panel w3-red w3-center w3-padding-16">
+                    <h1>Your To-Do list</h1>
+                    <form method="POST" action="{% block form_action %}{% url 'lists:new_list' %}{% endblock %}">
+                        <input name="item_text" id="id_new_item" placeholder="Enter a to-do item" />
+                        {% csrf_token %}
+                    </form>
+                  </div>
+                </div>
+            </div>
+            <div class="w3-row">
+                <div class="w3-col">
+                    {% block content %}
+                    {% endblock %}
+                </div>
+            </div>
+        </div>
     </body>
 </html>
