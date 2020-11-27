@@ -22,31 +22,34 @@ class NewVisitorTest(unittest.TestCase):
         except WebDriverException:
             pass
 
+        self.check_title()
+        item_list = ["Buy peacock feathers", "Use peacock feathers to make a fly'"]
+        self.input_items(item_list)
+        self.check_items_in_rows(item_list)
+
+    def check_title(self):
         self.assertIn('To-Do', self.browser.title)
         header_text = self.browser.find_element_by_tag_name('h1').text
         self.assertIn('To-Do', header_text)
 
-        item_list = ["rabbit", "cute puppy"]
+    def input_items(self, item_list):
         for i, item in enumerate(item_list, start=1):
             input_box = self.browser.find_element_by_id('id_new_item')
-            self.assertEqual(
-                input_box.get_attribute('placeholder'),
-                'Enter a to-do item'
-            )
-
             input_box.send_keys(item)
-
             input_box.send_keys(Keys.ENTER)
-            time.sleep(1)
+            time.sleep(0.5)
 
+    def check_items_in_rows(self, item_list):
         table = self.browser.find_element_by_id('id_list_table')
         rows = table.find_elements_by_tag_name('tr')
-
         for i, item in enumerate(item_list, start=1):
-            row = rows[i-1]
+            row = rows[i - 1]
+            real = row.text
+            expected = str(i) + ': ' + item
+            error_format = "새 아이템이 추가되지 않았어요!\n expected: %s\n real: %s"
             self.assertTrue(
-                row.text == str(i)+': '+item,
-                "새 아이템이 추가되지 않았어요!\n %s" % row.text
+                real == expected,
+                error_format % (expected, real)
             )
 
 
