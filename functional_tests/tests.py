@@ -20,11 +20,8 @@ class NewVisitorTest(LiveServerTestCase):
     def test_can_start_a_list_and_retrieve_it_later(self):
         # Edith has heard about a cool new online to-do app. She goes
         # to check out its homepage
-        try:
-            self.browser.get(self.live_server_url)
-        except WebDriverException:
-            pass
 
+        self.browser.get(self.live_server_url)
         self.check_title()
         item_list = ["Buy peacock feathers", "Use peacock feathers to make a fly'"]
         self.input_items(item_list)
@@ -59,3 +56,34 @@ class NewVisitorTest(LiveServerTestCase):
                 real == expected,
                 error_format % (expected, real)
             )
+
+    def test_multiple_users_can_start_lists_at_different_urls(self):
+        self.browser.get(self.live_server_url)
+        item_list = ['Buy peacock feathers']
+        self.input_items(item_list)
+        self.check_items_in_rows(item_list)
+
+        edith_list_url = self.browser.current_url
+        self.assertRegex(edith_list_url, '/lists/.+')
+
+        self.reboot_browser()
+
+        self.browser.get(self.live_server_url)
+        page_text = self.browser.find_element_by_tag_name('body').text
+        self.assertNotIn('Buy peacock feathers', page_text)
+
+        francis_item_list = ['Buy milk']
+        self.input_items(francis_item_list)
+        self.check_items_in_rows(francis_item_list)
+
+        francis_list_url = self.browser.current_url
+        self.assertRegex(francis_list_url, '/lists/.+')
+        self.assertNotEqual(francis_list_url, edith_list_url)
+
+        page_text = self.browser.find_element_by_tag_name('body').text
+        self.assertNotIn('Buy peacock feathers', page_text)
+
+    def reboot_browser(self):
+        self.browser.quit()
+        self.browser = webdriver.Chrome()
+
