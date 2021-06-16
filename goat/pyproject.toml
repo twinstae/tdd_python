@@ -1,0 +1,16 @@
+[tool.poetry]
+name = "tdd_python"
+version = "0.1.0"
+description = "Test-Driven Development with Python 실습"
+authors = ["twinstae <rabolution@gmail.com>"]
+
+[tool.poetry.dependencies]
+python = "^3.8"
+Django = "^3.2.4"
+
+[tool.poetry.dev-dependencies]
+selenium = "^3.141.0"
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
