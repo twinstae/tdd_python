@@ -51,19 +51,32 @@ class Batch:
 
         return (AllocateResultCode.SUCCESS, new_batch, allocated_line)
 
-def test_buy_2_small_table():
-    order = Line(1, SKU.SMALL_TABLE, 2, False)
-    batch = Batch(1, SKU.SMALL_TABLE, 20, date.today())
 
+def make_order_line_and_batch(sku: SKU, order_quantity, batch_quantity):
+    order = Line(1, sku, order_quantity, False)
+    batch = Batch(1, sku, batch_quantity, date.today())   
+    return order, batch
+
+
+def test_buy_2_small_table():
+    order, batch = make_order_line_and_batch(
+            SKU.SMALL_TABLE,
+            order_quantity=2,
+            batch_quantity=20
+        )
     code, new_batch, allocated_line = batch.allocate(order)
 
     assert code == AllocateResultCode.SUCCESS
     assert allocated_line.allocated == True
     assert new_batch.quantity == 18
 
+
 def test_available_batch_less_than_line():
-    order = Line(2, SKU.BLUE_CUSHION, 2, False)
-    batch = Batch(ref=2, sku=SKU.BLUE_CUSHION, quantity=1, eta=date.today())
+    order, batch = make_order_line_and_batch(
+            SKU.BLUE_CUSHION,
+            order_quantity=2,
+            batch_quantity=1
+        )
 
     code, new_batch, new_line = batch.allocate(order)
 
@@ -72,10 +85,9 @@ def test_available_batch_less_than_line():
     assert new_batch.quantity == 1
     assert new_line.allocated == False
 
-def test_cant_allocate_same_line_twice():
-    order = Line(3, SKU.BLUE_VASE, 2, False)
-    batch = Batch(3, SKU.BLUE_VASE, 20, date.today())
 
+def test_cant_allocate_same_line_twice():
+    order, batch = make_order_line_and_batch(SKU.BLUE_VASE, 2, 20)
     code, new_batch, allocated_line = batch.allocate(order)
 
     assert code == AllocateResultCode.SUCCESS
@@ -87,6 +99,7 @@ def test_cant_allocate_same_line_twice():
     assert code_2 == AllocateResultCode.ALREADY_ALLOCATED_LINE
     assert new_batch_2.quantity == 18
     assert allocated_line_2.allocated == True
+
 
 def test_cant_allocate_different_sku():
     order = Line(4, SKU.BLUE_VASE, 2, False)
