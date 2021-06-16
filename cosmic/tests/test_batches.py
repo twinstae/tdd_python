@@ -1,19 +1,14 @@
 from collections import namedtuple
 from enum import Enum
-from typing import Tuple
-from datetime import date
+from typing import List, Optional, Tuple
+from datetime import date, timedelta
 from dataclasses import dataclass
-
-class SKU(Enum):
-    SMALL_TABLE = "SMALL_TABLE"
-    BLUE_CUSHION = "BLUE_CUSHION"
-    BLUE_VASE = "BLUE_VASE"
 
 
 @dataclass(frozen=True)
 class Line:
-    ref: int
-    sku: SKU
+    ref: str
+    sku: str
     quantity: int
 
 
@@ -26,14 +21,14 @@ class AllocateResultCode(Enum):
 
 class Batch:
 
-    def __init__(self, ref: int, sku: SKU, quantity: int, eta: date):
+    def __init__(self, ref: str, sku: str, quantity: int, eta: Optional[date]):
         self.ref = ref
         self.sku = sku
         self.quantity = quantity
         self.eta = eta
         self._allocate = set()
 
-    def allocate(self, line: Line) -> AllocateResultCode:
+    def can_allocate(self, line):
         if line.sku != self.sku:
             return AllocateResultCode.DIFFRENT_SKU
 
@@ -42,22 +37,44 @@ class Batch:
 
         if self.quantity < line.quantity:
             return AllocateResultCode.AVAILABLE_LESS_TAHN_LINE
-        
+
+        return AllocateResultCode.SUCCESS
+
+    def allocate(self, line: Line) -> AllocateResultCode:
+        code = self.can_allocate(line)
+
+        if code != AllocateResultCode.SUCCESS:
+            return code
+
         self.quantity -= line.quantity
         self._allocate.add(line.ref)
 
         return AllocateResultCode.SUCCESS
 
 
-def make_order_line_and_batch(sku: SKU, order_quantity, batch_quantity):
-    order = Line(1, sku, order_quantity)
-    batch = Batch(1, sku, batch_quantity, date.today())   
+    def __gt__(self, other):
+        if self.eta is None:
+            return False
+        if other.eta is None:
+            return True
+        return self.eta > other.eta
+
+
+def allocate(line: Line, batches: List[Batch]) -> str:
+    batch = next(b for b in sorted(batches) if b.can_allocate(line))
+    batch.allocate(line)
+    return batch.ref
+
+
+def make_order_line_and_batch(sku: str, order_quantity, batch_quantity):
+    order = Line("order-ref", sku, order_quantity)
+    batch = Batch("batch-ref", sku, batch_quantity, date.today())   
     return order, batch
 
 
 def test_buy_2_small_table():
     order, batch = make_order_line_and_batch(
-            SKU.SMALL_TABLE,
+            "SMALL_TABLE",
             order_quantity=2,
             batch_quantity=20
         )
@@ -69,7 +86,7 @@ def test_buy_2_small_table():
 
 def test_available_batch_less_than_line():
     order, batch = make_order_line_and_batch(
-            SKU.BLUE_CUSHION,
+            "BLUE_CUSHION",
             order_quantity=2,
             batch_quantity=1
         )
@@ -81,7 +98,7 @@ def test_available_batch_less_than_line():
 
 
 def test_cant_allocate_same_line_twice():
-    order, batch = make_order_line_and_batch(SKU.BLUE_VASE, 2, 20)
+    order, batch = make_order_line_and_batch("BLUE_VASE", 2, 20)
     code = batch.allocate(order)
 
     assert code == AllocateResultCode.SUCCESS
@@ -94,9 +111,46 @@ def test_cant_allocate_same_line_twice():
 
 
 def test_cant_allocate_different_sku():
-    order = Line(4, SKU.BLUE_VASE, 2)
-    batch = Batch(ref=4, sku=SKU.BLUE_CUSHION, quantity=10, eta=date.today())
+    order = Line("line-4", "BLUE_VASE", 2)
+    batch = Batch(ref="batch-4", sku="BLUE_CUSHION", quantity=10, eta=date.today())
 
     code = batch.allocate(order)
 
     assert code == AllocateResultCode.DIFFRENT_SKU
+
+
+today = date.today()
+tomorrow = date.today() + timedelta(days=1)
+later = date.today() + timedelta(days=7)
+
+
+def test_prefers_current_stock_batches_to_shipments():
+    in_stock_batch = Batch("in-stock-batch", "RETRO-CLOCK", 100, eta=None)
+    shipment_batch = Batch("shipment-batch", "RETRO-CLOCK", 100, eta=tomorrow)
+    line = Line("oref", "RETRO-CLOCK", 10)
+
+    allocate(line, [in_stock_batch, shipment_batch])
+
+    assert in_stock_batch.quantity == 90
+    assert shipment_batch.quantity == 100
+
+
+def test_prefers_earlier_batches():
+    earliest = Batch("speedy-batch", "MINIMALIST-SPOON", 100, eta=today)
+    medium = Batch("normal-batch", "MINIMALIST-SPOON", 100, eta=tomorrow)
+    latest = Batch("slow-batch", "MINIMALIST-SPOON", 100, eta=later)
+    line = Line("order1", "MINIMALIST-SPOON", 10)
+
+    allocate(line, [medium, earliest, latest])
+
+    assert earliest.quantity == 90
+    assert medium.quantity == 100
+    assert latest.quantity == 100
+
+
+def test_returns_allocated_batch_ref():
+    in_stock_batch = Batch("in-stock-batch-ref", "HIGHBROW-POSTER", 100, eta=None)
+    shipment_batch = Batch("shipment-batch-ref", "HIGHBROW-POSTER", 100, eta=tomorrow)
+    line = Line("oref", "HIGHBROW-POSTER", 10)
+    allocation = allocate(line, [in_stock_batch, shipment_batch])
+    assert allocation == in_stock_batch.ref
