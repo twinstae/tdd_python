@@ -18,7 +18,7 @@ class OrderLine:
     quantity: int
 
 
-class AllocateResultCode(Enum):
+class AllocateResult(Enum):
     "allocate 했을 때 결과"
     SUCCESS = "SUCCESS"
     DIFFRENT_SKU = "Batch와 Line의 SKU가 달라요."
@@ -44,24 +44,28 @@ class Batch:
         self.eta = eta
         self._allocations: Set[OrderLine] = set()
 
-    def can_allocate(self, line: OrderLine) -> AllocateResultCode:
+
+    def __repr__(self):
+        return f"<Batch {self.ref}>"
+
+    def can_allocate(self, line: OrderLine) -> AllocateResult:
         """
         이 배치가 Line에 할당(allocate)할 수 있는지 Code로 반환. 실제로 할당하지는 않는다.
         가능한 결과는 AllocateResultCode 참조.
         """
 
         if line.sku != self.sku:
-            return AllocateResultCode.DIFFRENT_SKU
+            return AllocateResult.DIFFRENT_SKU
 
         if line in self._allocations:
-            return AllocateResultCode.ALREADY_ALLOCATED_LINE
+            return AllocateResult.ALREADY_ALLOCATED_LINE
 
         if self.available_quantity < line.quantity:
-            return AllocateResultCode.AVAILABLE_LESS_TAHN_LINE
+            return AllocateResult.AVAILABLE_LESS_TAHN_LINE
 
-        return AllocateResultCode.SUCCESS
+        return AllocateResult.SUCCESS
 
-    def allocate(self, line: OrderLine) -> AllocateResultCode:
+    def allocate(self, line: OrderLine) -> AllocateResult:
         """
         실제로 배치를 할당하고 성공, 실패 여부를 Code로 반환.
         가능한 결과는 AllocateResultCode 참조.
@@ -69,12 +73,12 @@ class Batch:
 
         code = self.can_allocate(line)
 
-        if code != AllocateResultCode.SUCCESS:
+        if code != AllocateResult.SUCCESS:
             return code
 
         self._allocations.add(line)
 
-        return AllocateResultCode.SUCCESS
+        return AllocateResult.SUCCESS
 
     def deallocate(self, line: OrderLine):
         "Line에 할당된 배치를 취소"
@@ -117,7 +121,7 @@ def allocate(line: OrderLine, batches: List[Batch]) -> str:
     try:
         batch = next(
             b for b in sorted(batches)
-            if b.can_allocate(line) == AllocateResultCode.SUCCESS
+            if b.can_allocate(line) == AllocateResult.SUCCESS
         )
         batch.allocate(line)
         return batch.ref
