@@ -1,6 +1,9 @@
 "Batch, Line 도메인 모델 테스트"
 
 from datetime import date, timedelta
+
+import pytest
+
 import model
 
 AllocateResultCode = model.AllocateResultCode
@@ -32,7 +35,7 @@ def test_buy_2_small_table():
     code = batch.allocate(order)
 
     assert code == AllocateResultCode.SUCCESS
-    assert batch.quantity == 18
+    assert batch.available_quantity == 18
 
 
 def test_available_batch_less_than_line():
@@ -50,7 +53,7 @@ def test_available_batch_less_than_line():
     code = batch.allocate(order)
 
     assert code == AllocateResultCode.AVAILABLE_LESS_TAHN_LINE
-    assert batch.quantity == 1
+    assert batch.available_quantity == 1
 
 
 def test_cant_allocate_same_line_twice():
@@ -63,12 +66,12 @@ def test_cant_allocate_same_line_twice():
     code = batch.allocate(order)
 
     assert code == AllocateResultCode.SUCCESS
-    assert batch.quantity == 18
+    assert batch.available_quantity == 18
 
     code_2 = batch.allocate(order)
 
     assert code_2 == AllocateResultCode.ALREADY_ALLOCATED_LINE
-    assert batch.quantity == 18
+    assert batch.available_quantity == 18
 
 
 def test_cant_allocate_different_sku():
@@ -83,7 +86,7 @@ def test_cant_allocate_different_sku():
     code = batch.allocate(order)
 
     assert code == AllocateResultCode.DIFFRENT_SKU
-    assert batch.quantity == 10
+    assert batch.available_quantity == 10
 
 
 today = date.today()
@@ -102,8 +105,8 @@ def test_prefers_current_stock_batches_to_shipments():
 
     allocate(line, [in_stock_batch, shipment_batch])
 
-    assert in_stock_batch.quantity == 90
-    assert shipment_batch.quantity == 100
+    assert in_stock_batch.available_quantity == 90
+    assert shipment_batch.available_quantity == 100
 
 
 def test_prefers_earlier_batches():
@@ -120,9 +123,9 @@ def test_prefers_earlier_batches():
 
     allocate(line, [medium, earliest, latest])
 
-    assert earliest.quantity == 90
-    assert medium.quantity == 100
-    assert latest.quantity == 100
+    assert earliest.available_quantity == 90
+    assert medium.available_quantity == 100
+    assert latest.available_quantity == 100
 
 
 def test_returns_allocated_batch_ref():
@@ -136,3 +139,15 @@ def test_returns_allocated_batch_ref():
     allocation = allocate(line, [in_stock_batch, shipment_batch])
 
     assert allocation == in_stock_batch.ref
+
+
+def test_allocate_out_of_stock():
+    """
+    allocate 할 batch가 없으면 OutOfStock 에러를 뱉는다.
+    """
+    small_batch = model.Batch("in-stock-batch-ref", "HIGHBROW-POSTER", 100, eta=None)
+    small_batch_2 = model.Batch("shipment-batch-ref", "HIGHBROW-POSTER", 100, eta=tomorrow)
+    large_order_line = model.OrderLine("oref", "HIGHBROW-POSTER", 1000)
+
+    with pytest.raises(model.OutOfStock, match="HIGHBROW-POSTER"):
+        allocate(large_order_line, [small_batch, small_batch_2])

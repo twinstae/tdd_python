@@ -15,7 +15,7 @@ def test_repository_can_save_a_batch(session):
     session.commit()  #(2)
 
     rows = session.execute(  #(3)
-        'SELECT ref, sku, quantity, eta FROM "batches"'
+        'SELECT ref, sku, _purchased_quantity, eta FROM "batches"'
     )
     assert list(rows) == [("batch1", "RUSTY-SOAPDISH", 100, None)]
 
@@ -37,7 +37,7 @@ def insert_order_line(session):
 def insert_batch(session, batch_id):
     "주어진 Batch(:batch_id, GENERIC-SOFA 100, eta=None)을 db에 추가한다."
     session.execute(  #(1)
-        "INSERT INTO batches (ref, sku, quantity, eta)"
+        "INSERT INTO batches (ref, sku, _purchased_quantity, eta)"
         ' VALUES (:ref, "GENERIC-SOFA", 100, null)',
         dict(ref=batch_id)
     )
@@ -71,7 +71,7 @@ def test_repository_can_retrieve_a_batch_with_allocations(session):
     expected = model.Batch("batch1", "GENERIC-SOFA", 100, eta=None)
     assert retrieved == expected  # Batch.__eq__ only compares reference  #(3)
     assert retrieved.sku == expected.sku  #(4)
-    assert retrieved.quantity == expected.quantity
+    assert retrieved._purchased_quantity == expected._purchased_quantity
     assert retrieved._allocations == {  #(4)
         model.OrderLine("order1", "GENERIC-SOFA", 12),
     }

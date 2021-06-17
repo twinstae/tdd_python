@@ -6,6 +6,10 @@ from datetime import date
 from dataclasses import dataclass
 
 
+class OutOfStock(Exception):
+    "할당할 수 있는 Batch가 없어요!"
+
+
 @dataclass(unsafe_hash=True)
 class OrderLine:
     "주문 라인"
@@ -36,9 +40,9 @@ class Batch:
     def __init__(self, ref: str, sku: str, quantity: int, eta: Optional[date]):
         self.ref = ref
         self.sku = sku
-        self.quantity = quantity
+        self._purchased_quantity = quantity
         self.eta = eta
-        self._allocate: Set[OrderLine] = set()
+        self._allocations: Set[OrderLine] = set()
 
     def can_allocate(self, line: OrderLine) -> AllocateResultCode:
         """
@@ -49,10 +53,10 @@ class Batch:
         if line.sku != self.sku:
             return AllocateResultCode.DIFFRENT_SKU
 
-        if line in self._allocate:
+        if line in self._allocations:
             return AllocateResultCode.ALREADY_ALLOCATED_LINE
 
-        if self.quantity < line.quantity:
+        if self.available_quantity < line.quantity:
             return AllocateResultCode.AVAILABLE_LESS_TAHN_LINE
 
         return AllocateResultCode.SUCCESS
@@ -68,12 +72,18 @@ class Batch:
         if code != AllocateResultCode.SUCCESS:
             return code
 
-        self.quantity -= line.quantity
-        self._allocate.add(line)
+        self._allocations.add(line)
 
         return AllocateResultCode.SUCCESS
 
+    def deallocate(self, line: OrderLine):
+        "Line에 할당된 배치를 취소"
+        if line in self._allocations:
+            self._allocations.remove(line)
+
     def __eq__(self, value):
+        if not isinstance(value, Batch):
+            return False
         return self.ref == value.ref
 
     def __gt__(self, other):
@@ -86,11 +96,30 @@ class Batch:
     def __lt__(self, other):
         return not self.__gt__(other)
 
+    def __hash__(self):
+        return hash(self.ref)
+
+    @property
+    def allocated_quantity(self) -> int:
+        "할당된 quantity"
+        return sum(line.quantity for line in self._allocations)
+
+    @property
+    def available_quantity(self) -> int:
+        "남은 quantity"
+        return self._purchased_quantity - self.allocated_quantity
+
 
 def allocate(line: OrderLine, batches: List[Batch]) -> str:
     """
     주어진 batches 중에서 can_allocate하고 eta가 가장 빠른 값에 line을 할당하고, 해당 batch.ref를 반환.
     """
-    batch = next(b for b in sorted(batches) if b.can_allocate(line))
-    batch.allocate(line)
-    return batch.ref
+    try:
+        batch = next(
+            b for b in sorted(batches)
+            if b.can_allocate(line) == AllocateResultCode.SUCCESS
+        )
+        batch.allocate(line)
+        return batch.ref
+    except StopIteration as no_next_e:
+        raise OutOfStock(f"sku {line.sku} 의 재고가 없어요.") from no_next_e
