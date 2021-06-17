@@ -8,6 +8,7 @@ authors = ["twinstae <rabolution@gmail.com>"]
 python = "^3.8"
 SQLAlchemy = "^1.4.18"
 fastapi = "^0.65.2"
+aiosqlite = "^0.17.0"
 
 [tool.poetry.dev-dependencies]
 pylint = "^2.8.3"

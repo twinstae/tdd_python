@@ -1,8 +1,10 @@
 "Batch, Line 도메인 모델 테스트"
 
 from datetime import date, timedelta
-from cosmic.domain.batch import AllocateResultCode, Batch, Line, allocate
+import model
 
+AllocateResultCode = model.AllocateResultCode
+allocate = model.allocate
 
 def make_order_line_and_batch(sku: str, order_quantity, batch_quantity):
     """
@@ -11,8 +13,8 @@ def make_order_line_and_batch(sku: str, order_quantity, batch_quantity):
     ref는 단일한 defalt 값이고, eta는 오늘(today)로 설정.
     *주의* ref나 eta를 다르게 설정하고 싶으면 이 함수를 쓰지 말 것.
     """
-    order = Line("order-ref", sku, order_quantity)
-    batch = Batch("batch-ref", sku, batch_quantity, date.today())
+    order = model.OrderLine("order-ref", sku, order_quantity)
+    batch = model.Batch("batch-ref", sku, batch_quantity, date.today())
     return order, batch
 
 
@@ -75,8 +77,8 @@ def test_cant_allocate_different_sku():
     DIFFRENT_SKU 에러를 반환하고
     quantity는 그대로 변하지 않는다.
     """
-    order = Line("line-4", "BLUE_VASE", 2)
-    batch = Batch(ref="batch-4", sku="BLUE_CUSHION", quantity=10, eta=date.today())
+    order = model.OrderLine("line-4", "BLUE_VASE", 2)
+    batch = model.Batch(ref="batch-4", sku="BLUE_CUSHION", quantity=10, eta=date.today())
 
     code = batch.allocate(order)
 
@@ -94,9 +96,9 @@ def test_prefers_current_stock_batches_to_shipments():
     allocate 함수로 여러 배치 중에 하나에 할당하면
     eta가 없는 in-stock-batch에 할당한다.
     """
-    in_stock_batch = Batch("in-stock-batch", "RETRO-CLOCK", 100, eta=None)
-    shipment_batch = Batch("shipment-batch", "RETRO-CLOCK", 100, eta=tomorrow)
-    line = Line("oref", "RETRO-CLOCK", 10)
+    in_stock_batch = model.Batch("in-stock-batch", "RETRO-CLOCK", 100, eta=None)
+    shipment_batch = model.Batch("shipment-batch", "RETRO-CLOCK", 100, eta=tomorrow)
+    line = model.OrderLine("oref", "RETRO-CLOCK", 10)
 
     allocate(line, [in_stock_batch, shipment_batch])
 
@@ -111,10 +113,10 @@ def test_prefers_earlier_batches():
     in_stock_batch가 없으면
     가장 빠른 earliest 배치에 할당한다.
     """
-    earliest = Batch("speedy-batch", "MINIMALIST-SPOON", 100, eta=today)
-    medium = Batch("normal-batch", "MINIMALIST-SPOON", 100, eta=tomorrow)
-    latest = Batch("slow-batch", "MINIMALIST-SPOON", 100, eta=later)
-    line = Line("order1", "MINIMALIST-SPOON", 10)
+    earliest = model.Batch("speedy-batch", "MINIMALIST-SPOON", 100, eta=today)
+    medium = model.Batch("normal-batch", "MINIMALIST-SPOON", 100, eta=tomorrow)
+    latest = model.Batch("slow-batch", "MINIMALIST-SPOON", 100, eta=later)
+    line = model.OrderLine("order1", "MINIMALIST-SPOON", 10)
 
     allocate(line, [medium, earliest, latest])
 
@@ -127,9 +129,9 @@ def test_returns_allocated_batch_ref():
     """
     allocate 함수는 할당한 배치의 ref를 반환한다.
     """
-    in_stock_batch = Batch("in-stock-batch-ref", "HIGHBROW-POSTER", 100, eta=None)
-    shipment_batch = Batch("shipment-batch-ref", "HIGHBROW-POSTER", 100, eta=tomorrow)
-    line = Line("oref", "HIGHBROW-POSTER", 10)
+    in_stock_batch = model.Batch("in-stock-batch-ref", "HIGHBROW-POSTER", 100, eta=None)
+    shipment_batch = model.Batch("shipment-batch-ref", "HIGHBROW-POSTER", 100, eta=tomorrow)
+    line = model.OrderLine("oref", "HIGHBROW-POSTER", 10)
 
     allocation = allocate(line, [in_stock_batch, shipment_batch])
 

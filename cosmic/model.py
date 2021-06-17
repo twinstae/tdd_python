@@ -6,10 +6,10 @@ from datetime import date
 from dataclasses import dataclass
 
 
-@dataclass(frozen=True)
-class Line:
+@dataclass(unsafe_hash=True)
+class OrderLine:
     "주문 라인"
-    ref: str
+    orderid: str
     sku: str
     quantity: int
 
@@ -38,9 +38,9 @@ class Batch:
         self.sku = sku
         self.quantity = quantity
         self.eta = eta
-        self._allocate: Set[str] = set()
+        self._allocate: Set[OrderLine] = set()
 
-    def can_allocate(self, line: Line) -> AllocateResultCode:
+    def can_allocate(self, line: OrderLine) -> AllocateResultCode:
         """
         이 배치가 Line에 할당(allocate)할 수 있는지 Code로 반환. 실제로 할당하지는 않는다.
         가능한 결과는 AllocateResultCode 참조.
@@ -49,7 +49,7 @@ class Batch:
         if line.sku != self.sku:
             return AllocateResultCode.DIFFRENT_SKU
 
-        if line.ref in self._allocate:
+        if line in self._allocate:
             return AllocateResultCode.ALREADY_ALLOCATED_LINE
 
         if self.quantity < line.quantity:
@@ -57,7 +57,7 @@ class Batch:
 
         return AllocateResultCode.SUCCESS
 
-    def allocate(self, line: Line) -> AllocateResultCode:
+    def allocate(self, line: OrderLine) -> AllocateResultCode:
         """
         실제로 배치를 할당하고 성공, 실패 여부를 Code로 반환.
         가능한 결과는 AllocateResultCode 참조.
@@ -69,10 +69,12 @@ class Batch:
             return code
 
         self.quantity -= line.quantity
-        self._allocate.add(line.ref)
+        self._allocate.add(line)
 
         return AllocateResultCode.SUCCESS
 
+    def __eq__(self, value):
+        return self.ref == value.ref
 
     def __gt__(self, other):
         if self.eta is None:
@@ -85,7 +87,7 @@ class Batch:
         return not self.__gt__(other)
 
 
-def allocate(line: Line, batches: List[Batch]) -> str:
+def allocate(line: OrderLine, batches: List[Batch]) -> str:
     """
     주어진 batches 중에서 can_allocate하고 eta가 가장 빠른 값에 line을 할당하고, 해당 batch.ref를 반환.
     """
