@@ -3,7 +3,7 @@
 from sqlalchemy.orm import mapper, relationship
 
 import db_tables
-import model
+from domain import model
 
 
 def start_mappers():

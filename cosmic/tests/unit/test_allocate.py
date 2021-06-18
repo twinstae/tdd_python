@@ -2,7 +2,7 @@ from datetime import date, timedelta
 
 import pytest
 
-import model
+from domain import model
 
 AllocateResult = model.AllocateResult
 allocate = model.allocate

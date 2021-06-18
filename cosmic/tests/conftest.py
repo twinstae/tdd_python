@@ -6,7 +6,7 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, clear_mappers
 from sqlalchemy.exc import ArgumentError
 from db_tables import metadata
-from orm import start_mappers
+from adapters import orm
 
 
 @pytest.fixture
@@ -29,7 +29,7 @@ def file_db():
 def in_memory_session(in_memory_db):
     """sqlite in memory db 세션을 반환"""
     try:
-        start_mappers()
+        orm.start_mappers()
     except ArgumentError:
         pass
     yield sessionmaker(bind=in_memory_db)()

@@ -2,7 +2,7 @@
 
 from datetime import date
 
-import model
+from domain import model
 
 AllocateResult = model.AllocateResult
 allocate = model.allocate

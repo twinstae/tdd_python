@@ -1,7 +1,7 @@
 """repository 테스트"""
 
-import model
-import repository
+from domain import model
+from adapters import repository
 
 def test_repository_can_save_a_batch(in_memory_session):
     """

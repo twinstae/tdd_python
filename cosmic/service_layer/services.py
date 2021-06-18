@@ -1,25 +1,40 @@
 """batch service"""
 
 from __future__ import annotations
-from typing import List
+from datetime import date
+from typing import List, Optional
 
-import model
-from model import OrderLine, Batch
-from repository import AbstractRepository
+from domain import model
+from adapters.repository import AbstractRepository
 
 
 class InvalidSku(Exception):
     """sku가 batches 중에 없습니다."""
 
 
-def is_valid_sku(sku: str, batches: List[Batch]):
+def is_valid_sku(sku: str, batches: List[model.Batch]):
     """
     input으로 받은 sku가 batches 중에 있는지 검사.
     """
     return sku in { b.sku for b in batches }
 
 
-def allocate(line: OrderLine, repo: AbstractRepository, session) -> str:
+def add_batch(
+        ref: str, sku: str, quantity: int, eta: Optional[date],
+        repo: AbstractRepository,
+        session
+    ) -> None:
+    repo.add(model.Batch(ref, sku, quantity, eta))
+    session.commit()
+
+
+def allocate(
+        orderid: str,
+        sku: str,
+        quantity: int,
+        repo: AbstractRepository,
+        session
+    ) -> str:
     """
     input으로 받은 line을
     repo의 batches 중 하나에 할당하고 (영속)
@@ -29,6 +44,7 @@ def allocate(line: OrderLine, repo: AbstractRepository, session) -> str:
     - InvalidSku
     - OutOfStock
     """
+    line = model.OrderLine(orderid, sku, quantity)
     batches = repo.list()
     if not is_valid_sku(line.sku, batches):
         raise InvalidSku(f"Invalid sku {line.sku}")

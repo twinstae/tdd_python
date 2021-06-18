@@ -2,7 +2,7 @@
 
 import abc
 from typing import List
-import model
+from domain import model
 
 
 class AbstractRepository(abc.ABC):
@@ -50,4 +50,3 @@ class SqlAlchemyRepository(AbstractRepository):
 
     def list(self):
         return self.session.query(model.Batch).all()
-
