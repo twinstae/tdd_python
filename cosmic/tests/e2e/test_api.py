@@ -1,8 +1,19 @@
 """api e2e test"""
 from fastapi.testclient import TestClient
+import pytest
+from sqlalchemy import create_engine
 
 from util import random_batchref, random_sku, random_orderid
 from fastapi_app import app, OrderLineDto
+import config
+from db_tables import metadata
+
+
+@pytest.fixture(scope="session")
+def sqlite_db():
+    engine = create_engine(config.get_sqlite_uri())
+    metadata.create_all(engine)
+    return engine
 
 
 with TestClient(app) as client:
@@ -15,7 +26,7 @@ with TestClient(app) as client:
         assert r.status_code == 201
 
 
-    # @pytest.mark.usefixtures("restart_api")
+    @pytest.mark.usefixtures("sqlite_db")
     def test_api_returns_allocation():
         """
         /allocate 에
@@ -44,6 +55,7 @@ with TestClient(app) as client:
         assert res.json()["batchref"] == earlybatch
 
 
+    @pytest.mark.usefixtures("sqlite_db")
     def test_unhappy_path_returns_400_and_error_message():
         unknown_sku, orderid = random_sku(), random_orderid()
 

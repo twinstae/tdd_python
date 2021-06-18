@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 from datetime import date
+from service_layer.unit_of_work import AbstractUnitOfWork
 from typing import List, Optional
 
 from domain import model
@@ -21,19 +22,18 @@ def is_valid_sku(sku: str, batches: List[model.Batch]):
 
 def add_batch(
         ref: str, sku: str, quantity: int, eta: Optional[date],
-        repo: AbstractRepository,
-        session
+        uow: AbstractUnitOfWork,
     ) -> None:
-    repo.add(model.Batch(ref, sku, quantity, eta))
-    session.commit()
+    with uow:
+        uow.batches.add(model.Batch(ref=ref, sku=sku, quantity=quantity, eta=eta))
+        uow.commit()
 
 
 def allocate(
         orderid: str,
         sku: str,
         quantity: int,
-        repo: AbstractRepository,
-        session
+        uow: AbstractUnitOfWork,
     ) -> str:
     """
     input으로 받은 line을
@@ -45,9 +45,10 @@ def allocate(
     - OutOfStock
     """
     line = model.OrderLine(orderid, sku, quantity)
-    batches = repo.list()
-    if not is_valid_sku(line.sku, batches):
-        raise InvalidSku(f"Invalid sku {line.sku}")
-    batchref = model.allocate(line, batches)
-    session.commit()
+    with uow:
+        batches = uow.batches.list()
+        if not is_valid_sku(line.sku, batches):
+            raise InvalidSku(f"Invalid sku {line.sku}")
+        batchref = model.allocate(line, batches)
+        uow.commit()
     return batchref

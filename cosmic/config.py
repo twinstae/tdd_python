@@ -8,6 +8,9 @@ def get_postgres_uri():
     user, db_name = "allocation", "allocation"
     return f"postgresql://{user}:{password}@{host}:{port}/{db_name}"
 
+def get_sqlite_uri():
+    return "sqlite:///test.db"
+
 
 def get_api_url():
     host = os.environ.get("API_HOST", "localhost")

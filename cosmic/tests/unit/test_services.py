@@ -1,10 +1,9 @@
 """batch allocate service test"""
 
 import pytest
-from domain import model
 from adapters import repository
-from service_layer import services
-
+from service_layer import services, unit_of_work
+from datetime import date
 
 class FakeRepository(repository.AbstractRepository):
     """test용 in memory 컬렉션 레포지토리"""
@@ -21,25 +20,23 @@ class FakeRepository(repository.AbstractRepository):
         return list(self._batches)
 
 
-class FakeSession:
-    """
-    테스트용 가짜 세션
-    """
-    committed = False
+class FakeUnitOfWork(unit_of_work.AbstractUnitOfWork):
+    def __init__(self):
+        self.batches = FakeRepository([])
+        self.committed = False
 
     def commit(self):
-        """
-        fake commit 메서드
-        committed 가 True로 바뀐다.
-        """
         self.committed = True
+
+    def rollback(self):
+        pass
 
 
 def test_add_batch():
-    repo, session = FakeRepository([]), FakeSession()
-    services.add_batch("b1", "CRUNCHY-ARMCHAIR", 100, None, repo, session)
-    assert repo.get("b1") is not None
-    assert session.committed
+    uow=FakeUnitOfWork()
+    services.add_batch("b1", "CRUNCHY-ARMCHAIR", 100, None, uow=uow)
+    assert uow.batches.get("b1") is not None
+    assert uow.committed
 
 
 def test_returns_allocation():
@@ -48,14 +45,12 @@ def test_returns_allocation():
     line을 batch에 할당하고
     할당한 batchref를 반환한다
     """
-
-    repo, session = FakeRepository([]), FakeSession()
-    services.add_batch("b1", "COMPLICATED-LAMP", 100, eta=None, repo=repo, session=session)
+    uow=FakeUnitOfWork()
+    services.add_batch("b1", "COMPLICATED-LAMP", 100, eta=None, uow=uow)
 
     result = services.allocate(
             "o1", "COMPLICATED-LAMP", 10,
-            repo=repo,
-            session=session
+            uow
         )
     assert result == "b1"
 
@@ -65,15 +60,14 @@ def test_error_for_invalid_sku():
     service.allocate 에 존재하지 않는 sku를 가진 line을 넘기면
     InvalidSku 에러를 발생시킨다.
     """
-    repo, session = FakeRepository([]), FakeSession()
-    services.add_batch("b1", "AREALSKU", 100, eta=None, repo=repo, session=session)
+    uow = FakeUnitOfWork()
+    services.add_batch("b1", "AREALSKU", 100, eta=None, uow=uow)
 
     with pytest.raises(services.InvalidSku, match="Invalid sku NONEXISTENTSKU"):
         services.allocate(
-                "o1", "NONEXISTENTSKU", 10,
-                repo = repo,
-                session = session
-            )
+            "o1", "NONEXISTENTSKU", 10,
+            uow=uow
+        )
 
 
 def test_commits():
@@ -81,12 +75,11 @@ def test_commits():
     service.allocate 를 실행하면,
     FakeSession의 committed는 True로 바뀐다.
     """
-    repo, session = FakeRepository([]), FakeSession()
-    services.add_batch("b1", "OMINOUS-MIRROR", 100, eta=None, repo=repo, session=session)
+    uow = FakeUnitOfWork()
+    services.add_batch("b1", "OMINOUS-MIRROR", 100, eta=None, uow=uow)
 
     services.allocate(
-            "o1", "OMINOUS-MIRROR", 10,
-            repo=repo,
-            session=session
-        )
-    assert session.committed is True
+        "o1", "OMINOUS-MIRROR", 10,
+        uow=uow
+    )
+    assert uow.committed is True
