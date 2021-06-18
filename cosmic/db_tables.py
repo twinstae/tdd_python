@@ -1,4 +1,4 @@
-"DB 테이블"
+"""DB 테이블"""
 
 from sqlalchemy import MetaData
 from sqlalchemy.sql.schema import Column, ForeignKey, Table

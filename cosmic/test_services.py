@@ -1,4 +1,4 @@
-"batch allocate service test"
+"""batch allocate service test"""
 
 import pytest
 import model
@@ -7,7 +7,7 @@ import services
 
 
 class FakeRepository(repository.AbstractRepository):
-    "test용 in memory 컬렉션 레포지토리"
+    """test용 in memory 컬렉션 레포지토리"""
     def __init__(self, batches):
         self._batches = set(batches)
 

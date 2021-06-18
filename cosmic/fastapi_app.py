@@ -23,16 +23,18 @@ app = FastAPI()
 
 
 class OrderLineDto(BaseModel):
-    "OrderLine의 Pydantic 모델. 귀찮군..."
+    """OrderLine의 Pydantic 모델. 귀찮군..."""
     orderid: str
     sku: str
     quantity: int
 
+
 def get_session_and_repo():
-    "session과 repo를 생성"
+    """session과 repo를 생성"""
     session = get_session()
     repo = repository.SqlAlchemyRepository(session)
     return session, repo
+
 
 @app.post("/allocate")
 def allocate_endpoint(body: OrderLineDto = Body(default=None)):

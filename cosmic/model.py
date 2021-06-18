@@ -12,14 +12,14 @@ class OutOfStock(Exception):
 
 @dataclass(unsafe_hash=True)
 class OrderLine:
-    "주문 라인"
+    """주문 라인"""
     orderid: str
     sku: str
     quantity: int
 
 
 class AllocateResult(Enum):
-    "allocate 했을 때 결과"
+    """allocate 했을 때 결과"""
     SUCCESS = "SUCCESS"
     DIFFRENT_SKU = "Batch와 Line의 SKU가 달라요."
     ALREADY_ALLOCATED_LINE = "이미 할당된 주문이에요!"
@@ -43,7 +43,6 @@ class Batch:
         self._purchased_quantity = quantity
         self.eta = eta
         self._allocations: Set[OrderLine] = set()
-
 
     def __repr__(self):
         return f"<Batch {self.ref}>"

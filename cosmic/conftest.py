@@ -11,21 +11,23 @@ from orm import start_mappers
 
 @pytest.fixture
 def in_memory_db():
-    "sqlite in memory db 엔진을 생성"
+    """sqlite in memory db 엔진을 생성"""
     engine = create_engine("sqlite:///:memory:")
     metadata.create_all(engine)
     return engine
 
+
 @pytest.fixture
 def file_db():
-    "sqlite file db 엔진을 생성"
+    """sqlite file db 엔진을 생성"""
     engine = create_engine("sqlite:///test.db")
     metadata.create_all(engine)
     return engine
 
+
 @pytest.fixture
 def in_memory_session(in_memory_db):
-    "sqlite in memory db 세션을 반환"
+    """sqlite in memory db 세션을 반환"""
     try:
         start_mappers()
     except ArgumentError:
@@ -33,7 +35,8 @@ def in_memory_session(in_memory_db):
     yield sessionmaker(bind=in_memory_db)()
     clear_mappers()
 
+
 @pytest.fixture
 def file_session(file_db):
-    "sqlite in memory db 세션을 반환"
+    """sqlite in memory db 세션을 반환"""
     yield sessionmaker(bind=file_db)()

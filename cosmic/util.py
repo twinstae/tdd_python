@@ -1,4 +1,4 @@
-"테스트용 helper, util 함수"
+"""테스트용 helper, util 함수"""
 
 import random
 import uuid
@@ -13,9 +13,11 @@ FURNITURE_TYPES = [
     "ARM-CHAIR", "SIDE-TABLE", "RUG", "WALL-DECOR", "CLOCK"
 ]
 
+
 def random_suffix():
     "uuid로 무작위 6개 hex를 생성"
     return uuid.uuid4().hex[:6]
+
 
 def random_sku(furniture_type="") -> str:
     """
@@ -33,6 +35,7 @@ def random_sku(furniture_type="") -> str:
 def random_batchref(name="") -> str:
     "batch-{name}-{random_suffix()}"
     return f"batch-{name}-{random_suffix()}"
+
 
 def random_orderid(name="") -> str:
     "order-{name}-{random_suffix()}"

@@ -1,4 +1,4 @@
-"Batch, Line 도메인 모델 테스트"
+"""Batch, Line 도메인 모델 테스트"""
 
 from datetime import date
 

@@ -1,4 +1,4 @@
-"batch service"
+"""batch service"""
 
 from __future__ import annotations
 from typing import List
@@ -9,7 +9,7 @@ from repository import AbstractRepository
 
 
 class InvalidSku(Exception):
-    "sku가 batches 중에 없습니다."
+    """sku가 batches 중에 없습니다."""
 
 
 def is_valid_sku(sku: str, batches: List[Batch]):

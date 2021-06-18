@@ -1,4 +1,4 @@
-"DB 레포지토리"
+"""DB 레포지토리"""
 
 import abc
 from typing import List
@@ -27,7 +27,7 @@ class AbstractRepository(abc.ABC):
         """
         raise NotImplementedError
 
-    @abc.abstractclassmethod
+    @abc.abstractmethod
     def list(self) -> List[model.Batch]:
         """
         외부 상태 : DB 상태
@@ -38,7 +38,7 @@ class AbstractRepository(abc.ABC):
 
 
 class SqlAlchemyRepository(AbstractRepository):
-    "Batch 레포지토리의 SQLAlchemy 구현"
+    """Batch 레포지토리의 SQLAlchemy 구현"""
     def __init__(self, session):
         self.session = session
 

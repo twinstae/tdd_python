@@ -1,4 +1,4 @@
-"repository 테스트"
+"""repository 테스트"""
 
 import model
 import repository
@@ -21,7 +21,7 @@ def test_repository_can_save_a_batch(in_memory_session):
 
 
 def insert_order_line(in_memory_session):
-    "OrderLine(order1, \"GENERIC-SOFA\", 12)를 db에 추가한다."
+    """OrderLine(order1, \"GENERIC-SOFA\", 12)를 db에 추가한다."""
 
     in_memory_session.execute(  #(1)
         "INSERT INTO order_lines (orderid, sku, quantity)"
@@ -35,7 +35,7 @@ def insert_order_line(in_memory_session):
 
 
 def insert_batch(in_memory_session, batch_id):
-    "주어진 Batch(:batch_id, GENERIC-SOFA 100, eta=None)을 db에 추가한다."
+    """주어진 Batch(:batch_id, GENERIC-SOFA 100, eta=None)을 db에 추가한다."""
     in_memory_session.execute(  #(1)
         "INSERT INTO batches (ref, sku, _purchased_quantity, eta)"
         ' VALUES (:ref, "GENERIC-SOFA", 100, null)',
@@ -49,7 +49,7 @@ def insert_batch(in_memory_session, batch_id):
 
 
 def insert_allocation(in_memory_session, orderline_id, batch_id):
-    "주어진 orderline_id를 batch_id에 할당한 allocation을 db에 추가한다."
+    """주어진 orderline_id를 batch_id에 할당한 allocation을 db에 추가한다."""
     in_memory_session.execute(
         "INSERT INTO allocations (orderline_id, batch_id)"
         " VALUES (:orderline_id, :batch_id)",
@@ -58,7 +58,7 @@ def insert_allocation(in_memory_session, orderline_id, batch_id):
 
 
 def test_repository_can_retrieve_a_batch_with_allocations(in_memory_session):
-    "repository는 db에서 batch를 allocations와 같이 가져올 수 있어야 한다."
+    """repository는 db에서 batch를 allocations와 같이 가져올 수 있어야 한다."""
 
     orderline_id = insert_order_line(in_memory_session)
     batch1_id = insert_batch(in_memory_session, "batch1")

@@ -1,6 +1,4 @@
-# pylint: disable=redefined-outer-name
-
-"api e2e test"
+"""api e2e test"""
 import pytest
 import requests
 
@@ -10,7 +8,7 @@ from fastapi_app import OrderLineDto
 
 @pytest.fixture
 def add_stock(file_session):
-    "주어진 lines에 해당하는 batches를 db에 추가하는 add_stock fixture"
+    """주어진 lines에 해당하는 batches를 db에 추가하는 add_stock fixture"""
     batches_added = set()
     skus_added = set()
 
