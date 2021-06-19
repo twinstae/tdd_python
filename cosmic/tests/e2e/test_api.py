@@ -1,12 +1,13 @@
 """api e2e test"""
+from service_layer.services import InvalidSku
 from fastapi.testclient import TestClient
 import pytest
 from sqlalchemy import create_engine
 
-from util import random_batchref, random_sku, random_orderid
+from tests.util import random_batchref, random_sku, random_orderid
 from fastapi_app import app, OrderLineDto
+from adapters.orm import metadata
 import config
-from db_tables import metadata
 
 
 @pytest.fixture(scope="session")
@@ -62,4 +63,4 @@ with TestClient(app) as client:
         data = {"orderid": orderid, "sku": unknown_sku, "quantity": 20}
         r = client.post("/allocate", json=data)
         assert r.status_code == 400
-        assert r.json()["message"] == f"Invalid sku {unknown_sku}"
+        assert r.json()["message"] == (InvalidSku.template % unknown_sku)

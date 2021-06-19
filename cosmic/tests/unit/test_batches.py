@@ -5,7 +5,6 @@ from datetime import date
 from domain import model
 
 AllocateResult = model.AllocateResult
-allocate = model.allocate
 
 def make_order_line_and_batch(sku: str, order_quantity, batch_quantity):
     """

@@ -113,16 +113,36 @@ class Batch:
         return self._purchased_quantity - self.allocated_quantity
 
 
-def allocate(line: OrderLine, batches: List[Batch]) -> str:
+class InvalidBatchSku(Exception):
     """
-    주어진 batches 중에서 can_allocate하고 eta가 가장 빠른 값에 line을 할당하고, 해당 batch.ref를 반환.
+    batches 중에 Product의 sku와 다른 sku를 가지고 있는 batch가 있습니다!
     """
-    try:
-        batch = next(
-            b for b in sorted(batches)
-            if b.can_allocate(line) == AllocateResult.SUCCESS
-        )
-        batch.allocate(line)
-        return batch.ref
-    except StopIteration as no_next_e:
-        raise OutOfStock(f"sku {line.sku} 의 재고가 없어요.") from no_next_e
+    def __init__(self, sku: str, batch:Batch):
+        self.message = f"{batch} {batch.sku} =/= Product {sku}"
+
+
+class Product:
+    def __init__(self, sku: str, batches: List[Batch], version_number: int = 0):
+        for batch in batches:
+            if batch.sku != sku:
+                raise InvalidBatchSku(sku, batch)
+        
+        self.sku = sku
+        self.batches = batches
+        self.version_number = version_number
+
+    def allocate(self, line: OrderLine) -> str:
+        """
+        주어진 batches 중에서 can_allocate하고 eta가 가장 빠른 값에 line을 할당하고, 해당 batch.ref를 반환.
+        """
+
+        try:
+            batch = next(
+                b for b in sorted(self.batches)
+                if b.can_allocate(line) == AllocateResult.SUCCESS
+            )
+            batch.allocate(line)
+            self.version_number += 1
+            return batch.ref
+        except StopIteration as no_next_e:
+            raise OutOfStock(f"sku {line.sku} 의 재고가 없어요.") from no_next_e

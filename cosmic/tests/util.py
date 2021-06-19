@@ -1,5 +1,6 @@
 """테스트용 helper, util 함수"""
 
+from datetime import date, timedelta
 import random
 import uuid
 
@@ -40,3 +41,10 @@ def random_batchref(name="") -> str:
 def random_orderid(name="") -> str:
     "order-{name}-{random_suffix()}"
     return f"order-{name}-{random_suffix()}"
+
+
+today = date.today()
+tomorrow = date.today() + timedelta(days=1)
+later = date.today() + timedelta(days=7)
+
+

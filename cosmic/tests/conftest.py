@@ -5,8 +5,8 @@ import pytest
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, clear_mappers
 from sqlalchemy.exc import ArgumentError
-from db_tables import metadata
 from adapters import orm
+from adapters.orm import metadata
 import config
 
 @pytest.fixture
