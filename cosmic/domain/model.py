@@ -130,7 +130,7 @@ class Product:
         self.sku = sku
         self.batches = batches
         self.version_number = version_number
-        self.events = []
+        self.events: List[events.Event] = []
 
     def allocate(self, line: OrderLine) -> Optional[str]:
         """
@@ -145,7 +145,7 @@ class Product:
             batch.allocate(line)
             self.version_number += 1
             return batch.ref
-        except StopIteration as no_next_e:
+        except StopIteration:
             self.events.append(events.OutOfStock(line.sku))
             return None
             # raise OutOfStock(f"sku {line.sku} 의 재고가 없어요.") from no_next_e

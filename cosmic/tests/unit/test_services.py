@@ -10,15 +10,16 @@ from tests.util import random_sku
 class FakeRepository(repository.AbstractRepository):
     """test용 in memory 컬렉션 레포지토리"""
     def __init__(self, products):
+        super().__init__()
         self._products = {product.sku: product for product in products }
 
-    def add(self, product: model.Product):
+    def _add(self, product: model.Product):
         sku = product.sku
         # if sku in self._products:
         #    raise ProductForTheSKUAlreadyExist(sku, self._products[sku])
         self._products[sku] = product
 
-    def get(self, sku: str):
+    def _get(self, sku: str):
         return self._products.get(sku)
 
 
@@ -27,7 +28,7 @@ class FakeUnitOfWork(unit_of_work.AbstractUnitOfWork):
         self.products = FakeRepository([])
         self.committed = False
 
-    def commit(self):
+    def _commit(self):
         self.committed = True
 
     def rollback(self):

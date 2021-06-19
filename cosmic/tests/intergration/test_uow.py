@@ -44,6 +44,9 @@ def test_uow_can_retrieve_a_batch_and_allocate_to_it(session_factory):
     uow = unit_of_work.SqlAlchemyUnitOfWork(session_factory)
     with uow:
         product = uow.products.get(sku=HIPSTER_WORKBENCH)
+        print(product.sku)
+        print(product.batches)
+        print(product.events)
         line = model.OrderLine("o1", HIPSTER_WORKBENCH, 10)
         product.allocate(line)
         uow.commit()

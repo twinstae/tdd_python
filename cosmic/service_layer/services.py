@@ -46,7 +46,7 @@ def allocate(
         sku: str,
         quantity: int,
         uow: AbstractUnitOfWork,
-    ) -> str:
+    ) -> Optional[str]:
     """
     input으로 받은 line을
     repo의 batches 중 하나에 할당하고 (영속)
