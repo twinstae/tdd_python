@@ -1,7 +1,8 @@
 import pytest
 
-from domain.model import Batch, OrderLine, Product, OutOfStock
-from tests.util import today, tomorrow, later
+from domain import events
+from domain.model import Batch, OrderLine, Product
+from tests.util import random_sku, today, tomorrow, later
 
 
 def test_prefers_current_stock_batches_to_shipments():
@@ -60,16 +61,17 @@ def test_returns_allocated_batch_ref():
     assert allocation == in_stock_batch.ref
 
 
-def test_allocate_out_of_stock():
+def test_records_out_of_stock_event_if_cannot_allocate():
     """
-    allocate 할 batch가 없으면 OutOfStock 에러를 뱉는다.
+    allocate했을 때 할당할 batch가 없으면
+    Product.events에 OutOfStock Event가 추가된다.
     """
-    HIGHBROW_POSTER = "HIGHBROW-POSTER"
-    small_batch = Batch("in-stock-batch-ref", HIGHBROW_POSTER, 100, eta=None)
-    small_batch_2 = Batch("shipment-batch-ref", HIGHBROW_POSTER, 100, eta=tomorrow)
-    product = Product(sku=HIGHBROW_POSTER, batches=[small_batch, small_batch_2])
+    RANDOM_SKU = random_sku()
+    ALL_QUANTITY = 10
+    batch = Batch("batch1", RANDOM_SKU, ALL_QUANTITY, eta=today)
+    product = Product(sku=RANDOM_SKU, batches=[batch])
+    product.allocate(OrderLine("order1", RANDOM_SKU, ALL_QUANTITY))
 
-    large_order_line = OrderLine("oref", HIGHBROW_POSTER, 1000)
-
-    with pytest.raises(OutOfStock, match=HIGHBROW_POSTER):
-        product.allocate(large_order_line)
+    allocation = product.allocate(OrderLine("order2", RANDOM_SKU, 1000))
+    assert product.events[-1] == events.OutOfStock(sku=RANDOM_SKU)
+    assert allocation is None

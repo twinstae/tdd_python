@@ -5,9 +5,9 @@ from typing import List, Optional, Set
 from datetime import date
 from dataclasses import dataclass
 
-
-class OutOfStock(Exception):
-    "할당할 수 있는 Batch가 없어요!"
+from domain import events
+# class OutOfStock(Exception):
+#     "할당할 수 있는 Batch가 없어요!"
 
 
 @dataclass(unsafe_hash=True)
@@ -130,8 +130,9 @@ class Product:
         self.sku = sku
         self.batches = batches
         self.version_number = version_number
+        self.events = []
 
-    def allocate(self, line: OrderLine) -> str:
+    def allocate(self, line: OrderLine) -> Optional[str]:
         """
         주어진 batches 중에서 can_allocate하고 eta가 가장 빠른 값에 line을 할당하고, 해당 batch.ref를 반환.
         """
@@ -145,4 +146,6 @@ class Product:
             self.version_number += 1
             return batch.ref
         except StopIteration as no_next_e:
-            raise OutOfStock(f"sku {line.sku} 의 재고가 없어요.") from no_next_e
+            self.events.append(events.OutOfStock(line.sku))
+            return None
+            # raise OutOfStock(f"sku {line.sku} 의 재고가 없어요.") from no_next_e

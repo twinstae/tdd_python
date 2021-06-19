@@ -4,14 +4,12 @@
 # pylint: disable=no-name-in-module
 from datetime import datetime
 from typing import Optional
-from fastapi.param_functions import Depends
 from pydantic import BaseModel
 
 from fastapi import FastAPI,Body
 from starlette.responses import JSONResponse
 
 # import config
-from domain import model
 from adapters import orm
 from service_layer import services
 from service_layer.unit_of_work import AbstractUnitOfWork, SqlAlchemyUnitOfWork
@@ -70,12 +68,12 @@ def allocate_endpoint(
 
     res
     - 201 {"batchref": str}
-    - 400 {"message": str(OutOfStock or InvalidSku)}
+    - 400 {"message": str(InvalidSku)}
     """
     uow: AbstractUnitOfWork = SqlAlchemyUnitOfWork()
     try:
         batchref = services.allocate(**body.dict(), uow=uow)
-    except (model.OutOfStock, services.InvalidSku) as error:
+    except (services.InvalidSku) as error:
         return JSONResponse({"message": str(error)}, status_code=400)
 
     return JSONResponse({"batchref": batchref}, status_code=201)
