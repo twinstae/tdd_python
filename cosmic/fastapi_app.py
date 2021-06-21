@@ -10,8 +10,9 @@ from fastapi import FastAPI,Body
 from starlette.responses import JSONResponse
 
 # import config
+from domain import commands
 from adapters import orm
-from service_layer import services
+from service_layer import handlers, message_bus
 from service_layer.unit_of_work import AbstractUnitOfWork, SqlAlchemyUnitOfWork
 
 
@@ -48,13 +49,14 @@ def add_batch(
     if eta is not None:
         eta = datetime.fromisoformat(eta).date()
 
-    services.add_batch(
+    cmd = commands.CreateBatch(
         ref=body.ref,
         sku=body.sku,
         quantity=body.quantity,
         eta=eta,
-        uow=uow,
     )
+    message_bus.handle(cmd, uow)
+
     return JSONResponse({"ok": True}, status_code=201)
 
 
@@ -72,8 +74,10 @@ def allocate_endpoint(
     """
     uow: AbstractUnitOfWork = SqlAlchemyUnitOfWork()
     try:
-        batchref = services.allocate(**body.dict(), uow=uow)
-    except (services.InvalidSku) as error:
+        cmd = commands.Allocate(**body.dict())
+        results = message_bus.handle(cmd, uow)
+        batch_ref = results.pop(0)
+    except (handlers.InvalidSku) as error:
         return JSONResponse({"message": str(error)}, status_code=400)
 
-    return JSONResponse({"batchref": batchref}, status_code=201)
+    return JSONResponse({"batchref": batch_ref}, status_code=201)

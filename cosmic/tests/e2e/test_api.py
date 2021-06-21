@@ -1,5 +1,5 @@
 """api e2e test"""
-from service_layer.services import InvalidSku
+from service_layer.handlers import InvalidSku
 from fastapi.testclient import TestClient
 import pytest
 from sqlalchemy import create_engine

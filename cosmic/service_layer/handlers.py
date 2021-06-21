@@ -1,12 +1,9 @@
-"""batch service"""
-
 from __future__ import annotations
-from datetime import date
-from service_layer.unit_of_work import AbstractUnitOfWork
-from typing import List, Optional
+from typing import Optional, TYPE_CHECKING, List
+from domain import commands, events, model
 
-from domain import model
-from adapters.repository import AbstractRepository
+if TYPE_CHECKING:
+    from . import unit_of_work
 
 
 class InvalidSku(Exception):
@@ -28,25 +25,23 @@ def is_valid_sku(sku: str, batches: List[model.Batch]):
 
 
 def add_batch(
-        ref: str, sku: str, quantity: int, eta: Optional[date],
-        uow: AbstractUnitOfWork,
-    ) -> None:
+    cmd: commands.CreateBatch,
+    uow: unit_of_work.AbstractUnitOfWork,
+):
     with uow:
-        product = uow.products.get(sku)
+        product = uow.products.get(cmd.sku)
         if product is None:
-            product = model.Product(sku, batches=[])
+            product = model.Product(cmd.sku, batches=[])
             uow.products.add(product)
 
-        product.batches.append(model.Batch(ref=ref, sku=sku, quantity=quantity, eta=eta))
+        product.batches.append(model.Batch(ref=cmd.ref, sku=cmd.sku, quantity=cmd.quantity, eta=cmd.eta))
         uow.commit()
 
 
 def allocate(
-        orderid: str,
-        sku: str,
-        quantity: int,
-        uow: AbstractUnitOfWork,
-    ) -> Optional[str]:
+    cmd: commands.Allocate,
+    uow: unit_of_work.AbstractUnitOfWork,
+) -> Optional[str]:
     """
     input으로 받은 line을
     repo의 batches 중 하나에 할당하고 (영속)
@@ -56,11 +51,25 @@ def allocate(
     - InvalidSku
     - OutOfStock
     """
-    line = model.OrderLine(orderid, sku, quantity)
+    line = model.OrderLine(cmd.orderid, cmd.sku, cmd.quantity)
     with uow:
-        product = uow.products.get(sku=sku)
+        product = uow.products.get(sku=cmd.sku)
         if product is None:
-            raise InvalidSku(sku)
+            raise InvalidSku(cmd.sku)
         batchref = product.allocate(line)
         uow.commit()
     return batchref
+
+
+class Email:
+    @staticmethod
+    def send(address: str, body: str):
+        print(f"이메일. To. {address}\n {body}")
+
+email = Email()
+
+def send_out_of_stock_notification(event: events.OutOfStock, uow):
+    email.send(
+        "stock@made.com",
+        f"Out of stock for {event.sku}"
+    )
