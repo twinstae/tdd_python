@@ -1,13 +1,21 @@
+"Product aggregate의 UnitOfWork"
 import abc
 
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
-from service_layer import message_bus
-from adapters import repository
-import config
+from allocation.adapters import repository
+from allocation import config
 
 class AbstractUnitOfWork(abc.ABC):
+    """
+    Product aggregate 의 UnitOfWork 인터페이스
+    products
+    __enter__
+    __exit__
+    commit
+    collect_new_events
+    """
     products: repository.AbstractRepository
 
     def __enter__(self) -> "AbstractUnitOfWork":

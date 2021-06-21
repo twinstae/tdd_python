@@ -10,10 +10,10 @@ from fastapi import FastAPI,Body
 from starlette.responses import JSONResponse
 
 # import config
-from domain import commands
-from adapters import orm
-from service_layer import handlers, message_bus
-from service_layer.unit_of_work import AbstractUnitOfWork, SqlAlchemyUnitOfWork
+from allocation.domain import commands
+from allocation.adapters import orm
+from allocation.service_layer import handlers, message_bus
+from allocation.service_layer.unit_of_work import AbstractUnitOfWork, SqlAlchemyUnitOfWork
 
 
 # config.get_postgres_uri()))

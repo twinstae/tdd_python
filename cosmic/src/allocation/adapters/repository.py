@@ -1,8 +1,8 @@
 """DB 레포지토리"""
 
 import abc
-from typing import List, Optional, Set
-from domain import model
+from typing import Optional, Set
+from allocation.domain import model
 
 
 class AbstractRepository(abc.ABC):

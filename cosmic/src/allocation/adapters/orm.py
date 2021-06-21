@@ -2,7 +2,7 @@
 
 from sqlalchemy.orm import mapper, relationship
 
-from domain import model
+from allocation.domain import model
 
 from sqlalchemy import MetaData
 from sqlalchemy.sql.schema import Column, ForeignKey, Table

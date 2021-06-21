@@ -5,9 +5,10 @@ import pytest
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, clear_mappers
 from sqlalchemy.exc import ArgumentError
-from adapters import orm
-from adapters.orm import metadata
-import config
+
+from allocation.adapters import orm
+from allocation.adapters.orm import metadata
+from allocation import config
 
 @pytest.fixture
 def in_memory_db():

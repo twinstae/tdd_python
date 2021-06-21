@@ -1,0 +1,22 @@
+version: "3"
+
+services:
+  api:
+    image: allocation-image
+    environment:
+      - API_HOST=api
+      - PYTHONDONTWRITEBYTECODE=1
+      - FASTAPI_APP=src/allocation/fastapi_app.py
+      - PYTHONUNBUFFERED=1
+    volumes:
+      - ./src:/src
+      - ./tests:/tests
+    entrypoint:
+      - python3
+      - -m
+      - uvicorn
+      - allocation.fastapi_app:app
+      - --host=0.0.0.0
+      - --port=8080
+    ports:
+      - "8080:8080"

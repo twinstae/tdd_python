@@ -1,7 +1,7 @@
 import pytest
 
-from domain import events
-from domain.model import Batch, OrderLine, Product
+from allocation.domain import events
+from allocation.domain.model import Batch, OrderLine, Product
 from tests.util import random_sku, today, tomorrow, later
 
 

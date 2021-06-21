@@ -1,6 +1,6 @@
 from __future__ import annotations
 from typing import Optional, TYPE_CHECKING, List
-from domain import commands, events, model
+from allocation.domain import commands, events, model
 
 if TYPE_CHECKING:
     from . import unit_of_work

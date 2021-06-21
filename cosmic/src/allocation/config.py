@@ -14,5 +14,5 @@ def get_sqlite_uri():
 
 def get_api_url():
     host = os.environ.get("API_HOST", "localhost")
-    port = 5005 if host == "localhost" else 80
+    port = 8080 if host == "localhost" else 80
     return f"http://{host}:{port}"

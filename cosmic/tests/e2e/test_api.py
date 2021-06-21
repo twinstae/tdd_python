@@ -1,14 +1,15 @@
 """api e2e test"""
-from service_layer.handlers import InvalidSku
-from fastapi.testclient import TestClient
+
 import pytest
+from fastapi.testclient import TestClient
 from sqlalchemy import create_engine
 
-from tests.util import random_batchref, random_sku, random_orderid
-from fastapi_app import app, OrderLineDto
-from adapters.orm import metadata
-import config
+from allocation.service_layer.handlers import InvalidSku
+from allocation.fastapi_app import app, OrderLineDto
+from allocation.adapters.orm import metadata
+from allocation import config
 
+from tests.util import random_batchref, random_sku, random_orderid
 
 @pytest.fixture(scope="session")
 def sqlite_db():

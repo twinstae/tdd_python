@@ -1,8 +1,8 @@
 from __future__ import annotations
 import logging
 from typing import List, Dict, Callable, Type, Union, TYPE_CHECKING
-from domain import commands, events
-from service_layer import handlers, unit_of_work
+from allocation.domain import commands, events
+from allocation.service_layer import handlers, unit_of_work
 
 
 if TYPE_CHECKING:

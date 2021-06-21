@@ -1,0 +1,14 @@
+# app
+fastapi
+uvicorn
+psycopg2-binary
+redis
+aiosqlite==0.17.0;
+sqlalchemy==1.4.18;
+
+# dev/tests
+pytest
+pytest-icdiff
+mypy
+requests
+tenacity

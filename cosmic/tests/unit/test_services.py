@@ -1,14 +1,13 @@
 """batch allocate service test"""
 
-from unittest import mock
+from collections import defaultdict
 
 import pytest
 
-from domain import model, commands
-from adapters import repository
-from service_layer import unit_of_work
+from allocation.domain import model, commands
+from allocation.adapters import repository
+from allocation.service_layer import unit_of_work, message_bus, handlers
 from tests.util import random_sku
-from service_layer import message_bus, handlers
 
 
 class FakeRepository(repository.AbstractRepository):
@@ -38,6 +37,13 @@ class FakeUnitOfWork(unit_of_work.AbstractUnitOfWork):
     def rollback(self):
         pass
 
+
+class FakeNotifications():
+    def __init__(self):
+        self.sent = defaultdict(list)  # type: Dict[str, List[str]]
+
+    def send(self, destination, message):
+        self.sent[destination].append(message)
 
 class TestAddBatch:
     def test_for_new_product(self):
@@ -88,15 +94,13 @@ class TestAllocate:
         message_bus.handle(commands.Allocate("o1", "OMINOUS-MIRROR", 10), uow)
         assert uow.committed
 
+    @pytest.mark.skip("TODO: notification 구현")
     def test_sends_email_on_out_of_stock_error(self):
+        fake_notifs = FakeNotifications()
         uow = FakeUnitOfWork()
-        message_bus.handle(
-            commands.CreateBatch("b1", "POPULAR-CURTAINS", 9, None), uow
-        )
+        message_bus.handle(commands.CreateBatch("b1", "POPULAR-CURTAINS", 9, None), uow)
+        message_bus.handle(commands.Allocate("o1", "POPULAR-CURTAINS", 10), uow)
 
-        with mock.patch("service_layer.handlers.email.send") as mock_send_mail:
-            message_bus.handle(commands.Allocate("o1", "POPULAR-CURTAINS", 10), uow)
-            assert mock_send_mail.call_args == mock.call(
-                "stock@made.com", f"Out of stock for POPULAR-CURTAINS"
-            )
-
+        assert fake_notifs.sent["stock@made.com"] == [
+            f"Out of stock for POPULAR-CURTAINS",
+        ]

@@ -5,8 +5,8 @@ from typing import List
 
 import pytest
 
-from domain import model
-from service_layer import unit_of_work
+from allocation.domain import model
+from allocation.service_layer import unit_of_work
 from tests.util import random_sku, random_batchref, random_orderid
 
 def insert_batch(session, ref, sku, quantity, eta, product_version=1):

@@ -5,7 +5,7 @@ from typing import List, Optional, Set
 from datetime import date
 from dataclasses import dataclass
 
-from domain import events
+from allocation.domain import events
 # class OutOfStock(Exception):
 #     "할당할 수 있는 Batch가 없어요!"
 
