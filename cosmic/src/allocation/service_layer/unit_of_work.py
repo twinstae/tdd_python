@@ -3,7 +3,6 @@ import abc
 
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
-
 from allocation.adapters import repository
 from allocation import config
 
@@ -32,7 +31,6 @@ class AbstractUnitOfWork(abc.ABC):
             while product.events:
                 yield product.events.pop(0)
 
-
     @abc.abstractmethod
     def _commit(self):
         raise NotImplementedError
@@ -42,10 +40,12 @@ class AbstractUnitOfWork(abc.ABC):
         raise NotImplementedError
 
 
-DEFAULT_SESSION_FACTORY = sessionmaker(bind=create_engine(config.get_sqlite_uri()))
+
+DEFAULT_SESSION_FACTORY = sessionmaker(bind=create_engine(config.get_postgres_uri()))
 
 
 class SqlAlchemyUnitOfWork(AbstractUnitOfWork):
+
     def __init__(self, session_factory=DEFAULT_SESSION_FACTORY):
         self.session_factory = session_factory
 
@@ -63,3 +63,4 @@ class SqlAlchemyUnitOfWork(AbstractUnitOfWork):
 
     def rollback(self):
         self.session.rollback()
+

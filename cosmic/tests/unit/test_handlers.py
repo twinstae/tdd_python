@@ -1,6 +1,8 @@
 """batch allocate service test"""
 
 from collections import defaultdict
+from datetime import date
+from typing import Dict, List
 
 import pytest
 
@@ -14,16 +16,19 @@ class FakeRepository(repository.AbstractRepository):
     """test용 in memory 컬렉션 레포지토리"""
     def __init__(self, products):
         super().__init__()
-        self._products = {product.sku: product for product in products }
+        self._products = set(products)
 
     def _add(self, product: model.Product):
-        sku = product.sku
-        # if sku in self._products:
-        #    raise ProductForTheSKUAlreadyExist(sku, self._products[sku])
-        self._products[sku] = product
+        self._products.add(product)
 
     def _get(self, sku: str):
-        return self._products.get(sku)
+        return next((p for p in self._products if p.sku == sku), None)
+
+    def _get_by_batchref(self, batch_ref: str):
+        return next(
+            (p for p in self._products for b in p.batches if b.ref == batch_ref),
+            None,
+        )
 
 
 class FakeUnitOfWork(unit_of_work.AbstractUnitOfWork):
@@ -104,3 +109,41 @@ class TestAllocate:
         assert fake_notifs.sent["stock@made.com"] == [
             f"Out of stock for POPULAR-CURTAINS",
         ]
+
+
+class TestChangeBatchQuantity:
+    def test_changes_available_quantity(self):
+        uow = FakeUnitOfWork()
+        message_bus.handle(
+            commands.CreateBatch("batch1", "ADORABLE-SETTEE", 100, None), uow
+        )
+        [batch] = uow.products.get(sku="ADORABLE-SETTEE").batches
+        assert batch.available_quantity == 100
+
+        batch_by_ref = uow.products.get_by_batchref("batch1")
+        assert batch_by_ref is not None
+
+        message_bus.handle(commands.ChangeBatchQuantity("batch1", 50), uow)
+
+        assert batch.available_quantity == 50
+
+    def test_reallocates_if_necessary(self):
+        uow = FakeUnitOfWork()
+        history = [
+            commands.CreateBatch("batch1", "INDIFFERENT-TABLE", 50, None),
+            commands.CreateBatch("batch2", "INDIFFERENT-TABLE", 50, date.today()),
+            commands.Allocate("order1", "INDIFFERENT-TABLE", 20),
+            commands.Allocate("order2", "INDIFFERENT-TABLE", 20),
+        ]
+        for msg in history:
+            message_bus.handle(msg, uow)
+        [batch1, batch2] = uow.products.get(sku="INDIFFERENT-TABLE").batches
+        assert batch1.available_quantity == 10
+        assert batch2.available_quantity == 50
+
+        message_bus.handle(commands.ChangeBatchQuantity("batch1", 25), uow)
+
+        # order1 or order2 will be deallocated, so we'll have 25 - 20
+        assert batch1.available_quantity == 5
+        # and 20 will be reallocated to the next batch
+        assert batch2.available_quantity == 30

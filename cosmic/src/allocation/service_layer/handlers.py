@@ -1,6 +1,8 @@
 from __future__ import annotations
 from typing import Optional, TYPE_CHECKING, List
+
 from allocation.domain import commands, events, model
+from allocation.adapters import redis_event_publisher
 
 if TYPE_CHECKING:
     from . import unit_of_work
@@ -58,7 +60,17 @@ def allocate(
             raise InvalidSku(cmd.sku)
         batchref = product.allocate(line)
         uow.commit()
-    return batchref
+        return batchref
+
+
+def change_batch_quantity(
+    cmd: commands.ChangeBatchQuantity,
+    uow: unit_of_work.AbstractUnitOfWork,
+):
+    with uow:
+        product = uow.products.get_by_batchref(batch_ref=cmd.ref)
+        product.change_batch_quantity(ref=cmd.ref, quantity=cmd.quantity)
+        uow.commit()
 
 
 class Email:
@@ -73,3 +85,9 @@ def send_out_of_stock_notification(event: events.OutOfStock, uow):
         "stock@made.com",
         f"Out of stock for {event.sku}"
     )
+
+def publish_allocated_event(
+    event: events.Allocated,
+    uow: unit_of_work.AbstractUnitOfWork,
+):
+    redis_event_publisher.publish(events.LINE_ALLOCATED, event)

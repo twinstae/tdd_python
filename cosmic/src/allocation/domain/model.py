@@ -1,11 +1,11 @@
 "Batch Domain Model"
 
 from enum import Enum
-from typing import List, Optional, Set
+from typing import List, Optional, Set, Union
 from datetime import date
 from dataclasses import dataclass
 
-from allocation.domain import events
+from allocation.domain import commands, events
 # class OutOfStock(Exception):
 #     "할당할 수 있는 Batch가 없어요!"
 
@@ -112,6 +112,10 @@ class Batch:
         "남은 quantity"
         return self._purchased_quantity - self.allocated_quantity
 
+    def deallocate_one(self) -> OrderLine:
+        print("deallocated")
+        return self._allocations.pop()
+
 
 class InvalidBatchSku(Exception):
     """
@@ -122,6 +126,8 @@ class InvalidBatchSku(Exception):
 
 
 class Product:
+    events = []
+
     def __init__(self, sku: str, batches: List[Batch], version_number: int = 0):
         for batch in batches:
             if batch.sku != sku:
@@ -130,7 +136,8 @@ class Product:
         self.sku = sku
         self.batches = batches
         self.version_number = version_number
-        self.events: List[events.Event] = []
+        self.events = []
+        # type: List[Union[Event, Command]]
 
     def allocate(self, line: OrderLine) -> Optional[str]:
         """
@@ -144,8 +151,27 @@ class Product:
             )
             batch.allocate(line)
             self.version_number += 1
+
+            self.events.append(
+                events.Allocated(
+                    orderid=line.orderid,
+                    sku=line.sku,
+                    quantity=line.quantity,
+                    batchref=batch.ref,
+                )
+            )
+
             return batch.ref
         except StopIteration:
             self.events.append(events.OutOfStock(line.sku))
             return None
             # raise OutOfStock(f"sku {line.sku} 의 재고가 없어요.") from no_next_e
+
+    def change_batch_quantity(self, ref: str, quantity: int):
+        batch = next(b for b in self.batches if b.ref == ref)
+        batch._purchased_quantity = quantity
+        while batch.available_quantity < 0:
+            line = batch.deallocate_one()
+            cmd = commands.Allocate(line.orderid, line.sku, line.quantity)
+            self.events.append(cmd)
+            print("event added")

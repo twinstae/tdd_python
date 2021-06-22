@@ -1,12 +1,12 @@
 """table -> model 맵핑"""
 
-from sqlalchemy.orm import mapper, relationship
-
-from allocation.domain import model
-
 from sqlalchemy import MetaData
+from sqlalchemy.orm import mapper, relationship
+from sqlalchemy.exc import ArgumentError
 from sqlalchemy.sql.schema import Column, ForeignKey, Table
 from sqlalchemy.sql.sqltypes import Integer, String, Date
+
+from allocation.domain import model
 
 metadata = MetaData()
 
@@ -47,21 +47,24 @@ products = Table(
 def start_mappers():
     """db table을 model에 mapping 한다."""
 
-    lines_mapper = mapper(model.OrderLine, order_lines)
-    batches_mapper = mapper(
-        model.Batch,
-        batches,
-        properties={
-            "_allocations": relationship(
-                lines_mapper,
-                secondary=allocations,
-                collection_class=set,
-            )
-        },
-    )
+    try:
+        lines_mapper = mapper(model.OrderLine, order_lines)
+        batches_mapper = mapper(
+            model.Batch,
+            batches,
+            properties={
+                "_allocations": relationship(
+                    lines_mapper,
+                    secondary=allocations,
+                    collection_class=set,
+                )
+            },
+        )
 
-    mapper(
-        model.Product,
-        products,
-        properties={ "batches": relationship(batches_mapper) }
-    )
+        mapper(
+            model.Product,
+            products,
+            properties={ "batches": relationship(batches_mapper) }
+        )
+    except ArgumentError:
+        pass

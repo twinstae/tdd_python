@@ -21,6 +21,7 @@ class CreateBatch(Command):
     quantity: int
     eta: Optional[date] = None
 
+CHANGE_BATCH_QUANTITY = "change_batch_quantity"
 
 @dataclass
 class ChangeBatchQuantity(Command):

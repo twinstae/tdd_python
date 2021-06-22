@@ -12,6 +12,9 @@ aiosqlite = "^0.17.0"
 requests = "^2.25.1"
 pydantic = "^1.8.2"
 uvicorn = "^0.14.0"
+tenacity = "^7.0.0"
+redis = "^3.5.3"
+psycopg2-binary = "^2.9.1"
 
 [tool.poetry.dev-dependencies]
 pytest = "^6.2.4"

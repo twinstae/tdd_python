@@ -3,6 +3,7 @@
 import abc
 from typing import Optional, Set
 from allocation.domain import model
+from allocation.adapters import orm
 
 
 class AbstractRepository(abc.ABC):
@@ -24,6 +25,12 @@ class AbstractRepository(abc.ABC):
             product.events = []
         return product
 
+    def get_by_batchref(self, batch_ref: str) -> Optional[model.Product]:
+        product = self._get_by_batchref(batch_ref)
+        if product:
+            self.seen.add(product)
+        return product
+
     @abc.abstractmethod
     def _add(self, product: model.Product):
         """
@@ -43,6 +50,11 @@ class AbstractRepository(abc.ABC):
         raise NotImplementedError
 
 
+    @abc.abstractmethod
+    def _get_by_batchref(self, batchref) -> Optional[model.Product]:
+        raise NotImplementedError
+
+
 class SqlAlchemyRepository(AbstractRepository):
     """Batch 레포지토리의 SQLAlchemy 구현"""
     def __init__(self, session):
@@ -54,3 +66,11 @@ class SqlAlchemyRepository(AbstractRepository):
 
     def _get(self, sku: str):
         return self.session.query(model.Product).filter_by(sku=sku).first()
+
+    def _get_by_batchref(self, batchref: str) -> Optional[model.Product]:
+        return (
+            self.session.query(model.Product)
+            .join(model.Batch)
+            .filter(orm.batches.c.ref == batchref)
+            .first()
+        )
