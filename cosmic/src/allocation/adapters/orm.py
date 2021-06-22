@@ -1,6 +1,6 @@
 """table -> model 맵핑"""
 
-from sqlalchemy import MetaData
+from sqlalchemy import MetaData, event
 from sqlalchemy.orm import mapper, relationship
 from sqlalchemy.exc import ArgumentError
 from sqlalchemy.sql.schema import Column, ForeignKey, Table
@@ -68,3 +68,8 @@ def start_mappers():
         )
     except ArgumentError:
         pass
+
+
+@event.listens_for(model.Product, "load")
+def receive_load(product, _):
+    product.events = []

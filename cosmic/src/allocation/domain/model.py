@@ -126,8 +126,6 @@ class InvalidBatchSku(Exception):
 
 
 class Product:
-    events = []
-
     def __init__(self, sku: str, batches: List[Batch], version_number: int = 0):
         for batch in batches:
             if batch.sku != sku:
