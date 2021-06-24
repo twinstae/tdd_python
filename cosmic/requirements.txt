@@ -9,6 +9,7 @@ sqlalchemy==1.4.18;
 # dev/tests
 pytest
 pytest-icdiff
+pytest-timeout
 mypy
 requests
 tenacity
