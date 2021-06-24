@@ -1,10 +1,8 @@
 """api e2e test"""
 
 import pytest
-import requests
 
 from allocation.service_layer.handlers import InvalidSku
-from allocation.fastapi_app import OrderLineDto
 
 from tests.util import random_batchref, random_sku, random_orderid
 from tests.e2e import api_client
@@ -28,10 +26,18 @@ def test_api_returns_allocation():
     api_client.post_to_add_batch(earlybatch, sku, 100, "2011-01-01")
     api_client.post_to_add_batch(otherbatch, othersku, 100, None)
 
-    res = api_client.post_to_allocate(random_orderid(), sku, quantity=3)
+    order_id = random_orderid()
 
-    assert res.status_code == 201
-    assert res.json()["batchref"] == earlybatch
+    res = api_client.post_to_allocate(order_id, sku, quantity=3)
+
+    assert res.status_code == 202
+
+    res = api_client.get_allocation(order_id)
+    assert res.ok
+    assert res.json() == [
+        {"sku": sku, "batchref": earlybatch},
+    ]
+
 
 @pytest.mark.usefixtures("postgres_db")
 @pytest.mark.usefixtures("restart_api")
@@ -47,3 +53,6 @@ def test_unhappy_path_returns_400_and_error_message():
 
     assert res.status_code == 400
     assert res.json()["message"] == (InvalidSku.template % unknown_sku)
+
+    res = api_client.get_allocation(orderid)
+    assert res.status_code == 404

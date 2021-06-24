@@ -44,6 +44,16 @@ products = Table(
     Column("version_number", Integer, nullable=False, server_default="0"),
 )
 
+
+allocations_view = Table(
+    "allocations_view",
+    metadata,
+    Column("orderid", String(255)),
+    Column("sku", String(255)),
+    Column("batchref", String(255)),
+)
+
+
 def start_mappers():
     """db table을 model에 mapping 한다."""
 

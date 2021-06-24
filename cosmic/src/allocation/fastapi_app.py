@@ -6,18 +6,17 @@ from datetime import datetime
 from typing import Optional
 from pydantic import BaseModel
 
-from fastapi import FastAPI,Body
+from fastapi import FastAPI, Body
+from fastapi.logger import logger
 from starlette.responses import JSONResponse
 
-# import config
+from allocation import bootstrap, views
 from allocation.domain import commands
 from allocation.adapters import orm
-from allocation.service_layer import handlers, message_bus
-from allocation.service_layer.unit_of_work import AbstractUnitOfWork, SqlAlchemyUnitOfWork
+from allocation.service_layer import handlers
 
-
-# config.get_postgres_uri()))
 app = FastAPI()
+bus = bootstrap.bootstrap()
 
 @app.on_event("startup")
 async def startup_event():
@@ -43,8 +42,6 @@ class BatchDto(BaseModel):
 def add_batch(
     body: BatchDto = Body(None),
 ):
-    uow: AbstractUnitOfWork = SqlAlchemyUnitOfWork()
-
     eta = body.eta
     if eta is not None:
         eta = datetime.fromisoformat(eta).date()
@@ -55,7 +52,7 @@ def add_batch(
         quantity=body.quantity,
         eta=eta,
     )
-    message_bus.handle(cmd, uow)
+    bus.handle(cmd)
 
     return JSONResponse({"ok": True}, status_code=201)
 
@@ -69,15 +66,27 @@ def allocate_endpoint(
     - body : OrderLineDto
 
     res
-    - 201 {"batchref": str}
+    - 202 {"batchref": str}
     - 400 {"message": str(InvalidSku)}
     """
-    uow: AbstractUnitOfWork = SqlAlchemyUnitOfWork()
     try:
         cmd = commands.Allocate(**body.dict())
-        results = message_bus.handle(cmd, uow)
+        results = bus.handle(cmd)
         batch_ref = results.pop(0)
     except (handlers.InvalidSku) as error:
         return JSONResponse({"message": str(error)}, status_code=400)
 
-    return JSONResponse({"batchref": batch_ref}, status_code=201)
+    return JSONResponse({"batchref": batch_ref}, status_code=202)
+
+
+@app.get("/allocations/{order_id}")
+def allocations_view_endpoint(order_id: str):
+    try:
+        result = views.allocations(order_id, bus.uow)
+    except Exception as e:
+        logger.info(e);
+        raise e
+
+    if not result:
+        return JSONResponse({"message": "not found"}, status_code=404)
+    return JSONResponse(result, status_code=200)

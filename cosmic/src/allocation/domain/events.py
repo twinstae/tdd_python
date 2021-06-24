@@ -19,3 +19,11 @@ class Allocated(Event):
     quantity: int
     batchref: str
 
+
+LINE_DEALLOCATED = "line_deallocated"
+
+@dataclass
+class Deallocated(Event):
+    orderid: str
+    sku: str
+    qty: int
